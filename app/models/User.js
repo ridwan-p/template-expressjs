@@ -1,7 +1,13 @@
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes, Model } = require("sequelize")
+const bcrypt = require("bcrypt");
+const InvalidEncryptException = require("../exceptions/InvalidEncryptPassword");
 const sequelize = require('../../connection').sequelize
 
-class User extends Model { }
+class User extends Model {
+  validPassword(password) {
+    return bcrypt.compare(password, this.password);
+  }
+}
 
 User.init({
   id: {
@@ -28,6 +34,25 @@ User.init({
   sequelize, // We need to pass the connection instance
   modelName: 'User', // We need to choose the model name
   tableName: "users"
+});
+
+User.beforeCreate((user, options) => {
+  return bcrypt.hash(user.password, bcrypt.genSaltSync(8))
+    .then(hash => {
+      user.password = hash;
+    })
+    .catch(err => {
+      throw new InvalidEncryptException();
+    });
+});
+User.beforeUpdate((user, options) => {
+  return bcrypt.hash(user.password, bcrypt.genSaltSync(8))
+    .then(hash => {
+      user.password = hash;
+    })
+    .catch(err => {
+      throw new InvalidEncryptException();
+    });
 });
 
 module.exports = User
