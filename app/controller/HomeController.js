@@ -1,5 +1,3 @@
-const User = require("../models/User")
-
 const index = (req, res, next) => {
   return res.send('Welcome to my apps')
 }
