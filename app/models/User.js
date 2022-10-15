@@ -7,6 +7,17 @@ class User extends Model {
   validPassword(password) {
     return bcrypt.compare(password, this.password);
   }
+
+  static async attempt(email, password) {
+    const user = await User.findOne({ where: { email } })
+
+    if (!(await user.validPassword(password))) {
+      throw new Exception('failed')
+    }
+
+    return user
+  }
+
 }
 
 User.init({
@@ -45,6 +56,7 @@ User.beforeCreate((user, options) => {
       throw new InvalidEncryptException();
     });
 });
+
 User.beforeUpdate((user, options) => {
   return bcrypt.hash(user.password, bcrypt.genSaltSync(8))
     .then(hash => {
@@ -54,5 +66,6 @@ User.beforeUpdate((user, options) => {
       throw new InvalidEncryptException();
     });
 });
+
 
 module.exports = User
